@@ -1,48 +1,111 @@
 package org.andaevalexander;
 
+import org.andaevalexander.species.*;
+import org.andaevalexander.map.Cell;
+import org.andaevalexander.map.EcosystemMap;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
 public class Ecosystem {
-    private EcosystemMap ecosystemMap;
-    private Cell[][] celledMap;
+    private final EcosystemMap ecosystemMap;
+    private final Cell[][] celledMap;
+    private final HashMap<List<Integer>, Cell> coordsToCellMap;
     private Random rand = new Random();
-    private HashMap<List<Integer>, Animal> coordsToCellMap;
 
     public Ecosystem(EcosystemMap ecosystemMap) {
         this.ecosystemMap = ecosystemMap;
-        this.celledMap = ecosystemMap.getMap();
+        this.celledMap = EcosystemMap.getMap();
         this.coordsToCellMap = new HashMap<>();
     }
 
     public void simulate(){
-        System.out.println(ecosystemMap.toString());
-        for (int y = 0; y < celledMap.length; y++){
-            for (int x = 0; x < celledMap[y].length; x++){
-                List<Integer> coords = new ArrayList<>();
-                coords.add(y);
-                coords.add(x);
-                if (celledMap[y][x].getCurrentAnimal() != null){
-                    coordsToCellMap.put(coords, celledMap[y][x].getCurrentAnimal());
+        System.out.println(ecosystemMap);
+        // вода распространяется
+        System.out.println("Вода распространяется\n");
+        for (int y = 0; y < celledMap.length; y++) {
+            for (int x = 0; x < celledMap[y].length; x++) {
+                EcosystemMap.spreadWater(x,y);
+            }
+        }
+
+        //Растения растут
+        for (int y = 0; y < celledMap.length; y++) {
+            for (int x = 0; x < celledMap[y].length; x++) {
+                Cell currentCell = celledMap[y][x];
+                if (!currentCell.getPlants().isEmpty()){
+                    List<Plant> plantsCopy = new ArrayList<>(currentCell.getPlants());
+
+                    for (Plant plant : plantsCopy) {
+                        plant.consumeResources();
+                        plant.grow();
+                    }
                 }
             }
         }
-        List<List<Integer>> keysToRemove = new ArrayList<>();
-        coordsToCellMap.forEach((coord, animal) -> {
+        System.out.println("Растения растут");
+        System.out.println(ecosystemMap);
+
+        for (int y = 0; y < celledMap.length; y++){
+            for (int x = 0; x < celledMap[y].length; x++){
+                List<Integer> coords = new ArrayList<>(2);
+                coords.add(y);
+                coords.add(x);
+                if (celledMap[y][x].getCurrentAnimal() != null){
+                    coordsToCellMap.put(coords, celledMap[y][x]);
+                }
+            }
+        }
+        // Травоядные ходят
+        coordsToCellMap.forEach((coord, cell) -> {
+            Animal animal = cell.getCurrentAnimal();
             if (animal instanceof Herbivore) {
                 animal.eat();
                 animal.move();
-                keysToRemove.add(coord);
+                animal.reproduce();
             }
         });
-        keysToRemove.forEach(coordsToCellMap::remove);
-        keysToRemove.clear();
-        coordsToCellMap.forEach((coord, animal) -> {
-            animal.eat();
-            animal.move();
+        System.out.println("Ход травоядных");
+        System.out.println(ecosystemMap);
+        // Хищники ходят
+        coordsToCellMap.forEach((coord, cell) -> {
+            Animal animal = cell.getCurrentAnimal();
+            if (animal instanceof Predator) {
+                animal.eat();
+                animal.move();
+                animal.reproduce();
+            }
         });
+        System.out.println("Ход хищников");
+        System.out.println(ecosystemMap);
+        // Пополнение источников воды
+        System.out.println("Пополнение источников воды");
+        EcosystemMap.getWaterSourceMap().forEach((coord, waterSouce) -> {
+            waterSouce.addWater(rand.nextInt(100));
+        });
+        // Старение
+        System.out.println("Происходит старение...");
+        for (int y = 0; y < celledMap.length; y++) {
+            for (int x = 0; x < celledMap[y].length; x++) {
+                Cell currentCell = celledMap[y][x];
+
+                // Старение всех растений в клетке
+                if (!currentCell.getPlants().isEmpty()) {
+                    List<Plant> plantsCopy = new ArrayList<>(currentCell.getPlants());
+                    for (Plant plant : plantsCopy) {
+                        plant.aging();
+                    }
+                }
+
+                // Старение животного в клетке, если оно там есть
+                Animal animal = currentCell.getCurrentAnimal();
+                if (animal != null) {
+                    animal.aging();
+                }
+            }
+        }
         coordsToCellMap.clear();
     }
 
