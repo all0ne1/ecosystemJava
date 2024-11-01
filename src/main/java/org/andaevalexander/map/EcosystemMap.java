@@ -61,8 +61,11 @@ public class EcosystemMap implements Serializable {
                 System.out.println("Превышен размер карты для хищников");
                 break;
             }
-            int x = rand.nextInt(width);
-            int y = rand.nextInt(height);
+            int x,y;
+            do{
+                x = rand.nextInt(0,width);
+                y = rand.nextInt(0,height);
+            } while (map[y][x].hasAnimal());
             Animal predator = new Predator("Bear", rand.nextInt(rangeOfPredatorsAge),predatorsLifeExpectancy, x, y);
             map[y][x].addAnimal(predator);
         }
@@ -73,9 +76,9 @@ public class EcosystemMap implements Serializable {
             }
             int x,y;
             do{
-                x = rand.nextInt(width);
-                y = rand.nextInt(height);
-            } while (!map[y][x].hasAnimal());
+                x = rand.nextInt(0,width);
+                y = rand.nextInt(0,height);
+            } while (map[y][x].hasAnimal());
             Animal herbivore = new Herbivore("Dear", rand.nextInt(rangeOfHerbivoreAge), herbivoreLifeExpectancy, x, y);
             map[y][x].addAnimal(herbivore);
 
