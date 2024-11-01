@@ -1,10 +1,12 @@
 package org.andaevalexander;
 
+import org.andaevalexander.climate.Climate;
 import org.andaevalexander.species.*;
 import org.andaevalexander.map.Cell;
 import org.andaevalexander.map.EcosystemMap;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -14,12 +16,15 @@ public class Ecosystem {
     private final Cell[][] celledMap;
     private final HashMap<List<Integer>, Cell> coordsToCellMap;
     private Random rand = new Random();
+    private final Climate climate;
 
-    public Ecosystem(EcosystemMap ecosystemMap) {
+    public Ecosystem(EcosystemMap ecosystemMap, int humidity, double temperature) {
         this.ecosystemMap = ecosystemMap;
         this.celledMap = EcosystemMap.getMap();
         this.coordsToCellMap = new HashMap<>();
+        this.climate = Climate.getInstance(temperature, humidity);
     }
+
 
     public void simulate(){
         System.out.println(ecosystemMap);
@@ -107,17 +112,6 @@ public class Ecosystem {
             }
         }
         coordsToCellMap.clear();
-    }
-
-
-    private void loadAnimals(String path){
-        try (BufferedReader bf = new BufferedReader(new FileReader(path))) {
-            for (String line = bf.readLine(); line != null; line = bf.readLine()) {
-                String[] data = line.split(",");
-            }
-        } catch (IOException e){
-            System.out.println("Error loading animals: " + e.getMessage());
-        }
-
+        EcosystemMap.saveState("save.txt");
     }
 }

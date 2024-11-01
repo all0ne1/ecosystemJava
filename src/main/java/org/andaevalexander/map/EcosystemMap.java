@@ -1,20 +1,19 @@
 package org.andaevalexander.map;
 
+import org.andaevalexander.climate.Climate;
 import org.andaevalexander.species.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
+import java.io.*;
+import java.util.*;
 
 import static org.andaevalexander.Colors.*;
 
-public class EcosystemMap {
+public class EcosystemMap implements Serializable {
     private static EcosystemMap instance;
     private static Cell[][] map;
     private static int width;
     private static int height;
-    private Random rand = new Random();
+    private static final Random rand = new Random();
 
     public final static HashMap<List<Integer>, Cell> waterSouceMap = new HashMap<>();
     public final static int[][] MOVING_DIRECTIONS =  {
@@ -51,7 +50,7 @@ public class EcosystemMap {
         // Добавляем хищников в верхний левый угол
         for (int y = 0; y < 2; y++) {
             for (int x = 0; x < 2; x++) {
-                Predator predator = new Predator("Bear", 4,5, x, y);
+                Predator predator = new Predator("Bear", 1,5, x, y);
                 map[y][x].addAnimal(predator);
             }
         }
@@ -59,7 +58,7 @@ public class EcosystemMap {
         // Добавляем травоядных в нижний правый угол
         for (int y = height - 2; y < height; y++) {
             for (int x = width - 2; x < width; x++) {
-                Herbivore herbivore = new Herbivore("Deer", 4, 6, x, y);
+                Herbivore herbivore = new Herbivore("Deer", 3, 6, x, y);
                 map[y][x].addAnimal(herbivore);
             }
         }
@@ -79,12 +78,6 @@ public class EcosystemMap {
     }
 
 
-    public static EcosystemMap getInstance(int height, int width) {
-        if (instance == null) {
-            instance = new EcosystemMap(height, width);
-        }
-        return instance;
-    }
 
     public static EcosystemMap getInstance() {
         return instance;
@@ -104,17 +97,30 @@ public class EcosystemMap {
 
     public static void moveAnimal(int x, int y) {
         Species curAnimal = (Species) map[y][x].getCurrentAnimal();
+        List<List<Integer>> directions = getAvailablePaths(x,y);
+        if (directions.isEmpty()) return;
+        List<Integer> movingDir = directions.get(rand.nextInt(directions.size()));
+        int nextX = movingDir.get(0);
+        int nextY = movingDir.get(1);
+        map[nextY][nextX].addAnimal((Animal) curAnimal);
+        curAnimal.setX(nextX);
+        curAnimal.setY(nextY);
+        map[y][x].removeAnimal();
+    }
+
+    private static List<List<Integer>> getAvailablePaths(int start_x, int start_y){
+        List<List<Integer>> availablePaths = new ArrayList<>(4);
         for (int[] dir : EcosystemMap.MOVING_DIRECTIONS) {
-            int newX = x + dir[0];
-            int newY = y + dir[1];
+            int newX = start_x + dir[0];
+            int newY = start_y + dir[1];
             if (isWithinBounds(newX, newY) && !isAnimalInMovingCell(newX, newY)) {
-                map[newY][newX].addAnimal((Animal) curAnimal);
-                curAnimal.setX(newX);
-                curAnimal.setY(newY);
-                map[y][x].removeAnimal();
-                break;
+                availablePaths.add(new ArrayList<>(2) {{
+                    add(newX);
+                    add(newY);
+                }});
             }
         }
+        return availablePaths;
     }
 
     private void addRandomWaterSources(int numSources) {
@@ -134,13 +140,39 @@ public class EcosystemMap {
         return waterSouceMap;
     }
 
+    public static void saveState(String filename){
+        try (FileOutputStream fileOut = new FileOutputStream(filename);
+             ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+            out.writeObject(EcosystemMap.getMap()); // Сохранение массива клеток
+            out.writeObject(Climate.getInstance());   // Сохранение климата
+            System.out.println("Состояние сохранено в " + filename);
+        } catch (IOException e) {
+            System.err.println("Ошибка при сохранении состояния: " + e.getMessage());
+        }
+    }
+
+
+    public static void loadState(String filename){
+        try (FileInputStream fileIn = new FileInputStream(filename);
+             ObjectInputStream in = new ObjectInputStream(fileIn)) {
+            Cell[][] loadedCelledMap = (Cell[][]) in.readObject();
+            Climate loadedClimate = (Climate) in.readObject();
+
+            instance = new EcosystemMap(loadedCelledMap.length, loadedCelledMap[0].length);
+            map = loadedCelledMap; // устанавливаем загруженный массив в карту
+
+            // Устанавливаем загруженный климат
+            Climate.getInstance(loadedClimate.getTemperature(), loadedClimate.getHumidity());
+
+            System.out.println("Состояние загружено из " + filename);
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Ошибка при загрузке состояния: " + e.getMessage());
+        }
+    }
+
     @Override
     public String toString() {
-
-
         StringBuilder res = new StringBuilder();
-
-
         // Верхняя граница
         res.append("+" + "-".repeat(width * 5) + "+\n");
 
@@ -157,16 +189,16 @@ public class EcosystemMap {
                             res.append(GREEN + String.format(" [H,%dT]",currentPlantsInCell) + RESET);
                         }
                     } else if (cell.getCurrentAnimal() instanceof Herbivore) {
-                        res.append(GREEN + " [H]" + RESET); // Травоядное
+                        res.append(GREEN + " [*HE*]" + RESET); // Травоядное
                     } else if (cell.getCurrentAnimal() instanceof Predator) {
-                        res.append(RED + " [P]" + RESET); // Хищник
+                        res.append(RED + " [*PR*]" + RESET); // Хищник
                     } else if (cell.hasPlant() && !cell.hasAnimal()) {
-                        res.append(YELLOW + String.format(" [%dT]", currentPlantsInCell) + RESET); // Растение
+                        res.append(YELLOW + String.format(" [*%dT*]", currentPlantsInCell) + RESET); // Растение
                     } else {
-                        res.append(" [  ] ");
+                        res.append(" [****]");
                     }
                 } else {
-                    res.append(" [  ] ");
+                    res.append(" [****]");
                 }
             }
             res.append("|\n");  // Правая граница

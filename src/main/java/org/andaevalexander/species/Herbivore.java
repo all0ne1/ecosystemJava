@@ -25,13 +25,13 @@ public class Herbivore extends Species implements Animal{
 
     @Override
     public void reproduce() {
-        if (saturation > 100){
+        if (saturation > 70){
             for (int[] dir : EcosystemMap.MOVING_DIRECTIONS) {
                 int newX = x + dir[0];
                 int newY = y + dir[1];
                 if (isWithinBounds(newX, newY) && !isAnimalInMovingCell(newX, newY)) {
                     map[newY][newX].addAnimal(new Herbivore(this.name,0, herbivoresLifeExpec, newX, newY));
-                    saturation -= 50;
+                    saturation -= (int) (50 * energyConsumptionRate);
                     break;
                 }
             }

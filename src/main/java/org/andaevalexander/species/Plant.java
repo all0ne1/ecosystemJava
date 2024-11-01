@@ -1,6 +1,7 @@
 package org.andaevalexander.species;
 
-public interface Plant {
+
+public interface Plant{
     void grow();
     void consumeResources();
     int getCostOfEating();

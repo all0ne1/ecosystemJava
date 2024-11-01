@@ -3,12 +3,12 @@ package org.andaevalexander.species;
 import org.andaevalexander.map.Cell;
 import org.andaevalexander.map.EcosystemMap;
 
+import java.io.Serializable;
 import java.util.Random;
 
-public class Flora extends Species implements Plant {
-    private int energy = 10;
+public class Flora extends Species implements Plant, Serializable {
     private int waterAmount = 10;
-    private Random rand = new Random();
+    private final Random rand = new Random();
     private final int plantsLifeExpec;
     public Flora(String name, int age, int plantsLifeExpec, int x, int y) {
         super(name, age);
@@ -19,7 +19,7 @@ public class Flora extends Species implements Plant {
 
     @Override
     public void grow() {
-        if (waterAmount > 100 && energy > 100) {
+        if (waterAmount > energyToGrowth && saturation > energyToGrowth) {
             if (map[y][x].getPlants().size() < map[y][x].getPlantInCellCapacity()){
                 map[y][x].addPlant(new Flora(this.name, 0, plantsLifeExpec, x, y));
             } else{
@@ -28,8 +28,8 @@ public class Flora extends Species implements Plant {
                     int nextY = y + dir[1];
                     if (EcosystemMap.isWithinBounds(nextX, nextY)){
                         map[nextY][nextX].addPlant(this);
-                        waterAmount -= 100;
-                        energy -= 100;
+                        waterAmount -= energyToGrowth;
+                        saturation -= energyToGrowth;
                         break;
                     }
                 }
@@ -42,12 +42,12 @@ public class Flora extends Species implements Plant {
     public void consumeResources() {
         Cell currentCell = map[y][x];
         waterAmount += currentCell.reduceWater(rand.nextInt(10,50));
-        energy += 20;
+        saturation += 20;
     }
 
     @Override
     public int getCostOfEating() {
-        return (waterAmount + energy) / 2;
+        return (waterAmount + saturation) / 2;
     }
 
     @Override

@@ -30,11 +30,11 @@ public class Predator extends Species implements Animal{
                 if (huntingCell.getCurrentAnimal() instanceof Herbivore && chanceOfSuccess > 40) {
                     Herbivore huntedAnimal = (Herbivore) huntingCell.getCurrentAnimal();
                     map[newY][newX].removeAnimal();
-                    saturation += (int) (huntedAnimal.getSaturation() * 0.3);
+                    saturation += (int) (huntedAnimal.getSaturation() * 0.4) ;
                     map[newY][newX].addAnimal(this);
                     Predator predator = (Predator) huntingCell.getCurrentAnimal();
                     currentCell.removeAnimal();
-                    System.out.println("Predator in cell with coords (x,y): " + (y+1) + ", " + (x+1) + " succeed with hunting!");
+                    System.out.println("Predator in cell with coords (y,x): " + (y+1) + ", " + (x+1) + " succeed with hunting!");
                     System.out.println(EcosystemMap.getInstance());
                     predator.setX(newX);
                     predator.setY(newY);
@@ -53,7 +53,7 @@ public class Predator extends Species implements Animal{
                 int newY = y + dir[1];
                 if (isWithinBounds(newX, newY) && !isAnimalInMovingCell(newX, newY)) {
                     map[newY][newX].addAnimal(new Predator(this.name,0, predatorsLifeExpec, newX, newY));
-                    saturation -= 50;
+                    saturation -= (int) (50 * energyConsumptionRate);
                     break;
                 }
             }

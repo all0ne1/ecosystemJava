@@ -3,22 +3,21 @@ package org.andaevalexander.map;
 import org.andaevalexander.species.Animal;
 import org.andaevalexander.species.Plant;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 
-public class Cell {
+public class Cell implements Serializable {
     private final int plantInCellCapacity;
     private final List<Plant> plants;
     private Animal currentAnimal;
     private final Random rand = new Random();
     private int waterCapacity;
-    private final boolean waterSource;
 
     public Cell(List<Plant> plants, int plantInCellCapacity, int waterCapacity) {
         this.plants = plants;
         this.plantInCellCapacity = plantInCellCapacity;
         this.waterCapacity = waterCapacity;
-        waterSource = waterCapacity > 150;
     }
 
     public void addWater(int amount){
