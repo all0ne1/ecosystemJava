@@ -44,9 +44,10 @@ public class Main {
     private static void printLegend(){
         StringBuilder legend = new StringBuilder();
         legend.append("Легенда:\n")
-                .append(GREEN + "[H]" + RESET + " - Травоядное\n")
+                .append(GREEN + "[HE]" + RESET + " - Травоядное\n")
                 .append(RED + "[P]" + RESET + " - Хищник\n")
-                .append(BLUE + "[W]" + RESET + " - Животное и растение\n")
+                .append(GREEN + "[H,T]" + RESET + " - Травоядное и растение\n")
+                .append(RED + "[P,T]" + RESET + " - Хищник и растение\n")
                 .append(YELLOW + "[T]" + RESET + " - Растение\n");
         System.out.println(legend);
     }
