@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Utils {
     public static List<String> getAvailableSimulations(){
@@ -16,7 +17,7 @@ public class Utils {
                 .filter(file -> !file.isDirectory())
                 .map(File::getName)
                 .filter((name) -> name.endsWith("txt"))
-                .toList();
+                .collect(Collectors.toList());
         System.out.println("Доступные симуляции: ");
         for (int i = 0; i < availableSimulations.size(); i++) {
             System.out.println((i + 1) + ". " + availableSimulations.get(i));

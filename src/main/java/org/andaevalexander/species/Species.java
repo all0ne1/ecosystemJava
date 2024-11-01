@@ -22,13 +22,13 @@ public abstract class Species implements Serializable {
         this.name = name;
         this.age = age;
         switch (Climate.getConditions()) {
-            case Conditions.GOOD:
+            case GOOD:
                 this.energyConsumptionRate = 1.2;
                 break;
-            case Conditions.MODERATE:
+            case MODERATE:
                 this.energyConsumptionRate = 1.0;
                 break;
-            case Conditions.BAD:
+            case BAD:
                 this.energyConsumptionRate = 0.7;
                 break;
         }
@@ -36,13 +36,13 @@ public abstract class Species implements Serializable {
 
     public void updateConditions() {
         switch (Climate.getConditions()) {
-            case Conditions.GOOD:
+            case GOOD:
                 this.energyConsumptionRate = 1.2;
                 break;
-            case Conditions.MODERATE:
+            case MODERATE:
                 this.energyConsumptionRate = 1.0;
                 break;
-            case Conditions.BAD:
+            case BAD:
                 this.energyConsumptionRate = 0.7;
                 break;
         }
