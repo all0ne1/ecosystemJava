@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 
+import static org.andaevalexander.Config.maxWaterInCell;
+
 public class Cell implements Serializable {
     private final int plantInCellCapacity;
     private final List<Plant> plants;
@@ -17,15 +19,16 @@ public class Cell implements Serializable {
     public Cell(List<Plant> plants, int plantInCellCapacity, int waterCapacity) {
         this.plants = plants;
         this.plantInCellCapacity = plantInCellCapacity;
-        this.waterCapacity = waterCapacity;
+        this.waterCapacity = Math.min(maxWaterInCell, waterCapacity);
     }
 
     public void addWater(int amount){
-        waterCapacity += amount;
+        waterCapacity = Math.min(maxWaterInCell, waterCapacity + amount);
     }
 
     public int reduceWater(int amount){
-        waterCapacity -= amount;
+
+        waterCapacity = Math.min(0, waterCapacity - amount);
         return amount;
     }
 

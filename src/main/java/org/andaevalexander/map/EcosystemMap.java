@@ -1,16 +1,20 @@
 package org.andaevalexander.map;
 
+import org.andaevalexander.Config;
 import org.andaevalexander.climate.Climate;
 import org.andaevalexander.species.*;
 
 import java.io.*;
 import java.util.*;
 
-import static org.andaevalexander.Colors.*;
+import static org.andaevalexander.Config.*;
+import static org.andaevalexander.utils.Colors.*;
 
 public class EcosystemMap implements Serializable {
     private static EcosystemMap instance;
     private static Cell[][] map;
+    public static final String UUID_FILE = UUID.randomUUID().toString();
+    public static final String SAVE_FILE = "./savedSimulations/simulation_state_" + UUID_FILE + ".txt";
     private static int width;
     private static int height;
     private static final Random rand = new Random();
@@ -23,6 +27,12 @@ public class EcosystemMap implements Serializable {
             {0, -1}   // вверх
     };
 
+    private EcosystemMap(int height, int width, Cell[][] loadedMap) {
+        EcosystemMap.height = height;
+        EcosystemMap.width = width;
+        map = loadedMap;
+    }
+
     private EcosystemMap(int height, int width) {
         EcosystemMap.height = height;
         EcosystemMap.width = width;
@@ -30,37 +40,45 @@ public class EcosystemMap implements Serializable {
         // init cells
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                map[y][x] = new Cell(new ArrayList<>(), 5, rand.nextInt(0,150));
+                map[y][x] = new Cell(new ArrayList<>(), maxPlantInCell, rand.nextInt(0,maxWaterInCell));
             }
         }
 
-        addRandomWaterSources(5);
+        addRandomWaterSources(numOfWaterSources);
 
         //add plants
         for (int y = 0; y < map.length; y++) {
             for (int x = 0; x < map[y].length; x++) {
-                for (int i = 0; i < rand.nextInt(5); i++) {
-                    map[y][x].addPlant(new Flora("Grass", 2,8, x,y));
+                for (int i = 0; i < rand.nextInt(0, maxPlantInCell); i++) {
+                    map[y][x].addPlant(new Flora("Grass", rand.nextInt(rangeOfPlantsAge + 1),plantsLifeExpectancy, x,y));
                 }
             }
         }
 
 
-
-        // Добавляем хищников в верхний левый угол
-        for (int y = 0; y < 2; y++) {
-            for (int x = 0; x < 2; x++) {
-                Predator predator = new Predator("Bear", 1,5, x, y);
-                map[y][x].addAnimal(predator);
+        for (int i = 0; i < startAmountOfPredators; i++){
+            if (startAmountOfPredators > width * height){
+                System.out.println("Превышен размер карты для хищников");
+                break;
             }
+            int x = rand.nextInt(width);
+            int y = rand.nextInt(height);
+            Animal predator = new Predator("Bear", rand.nextInt(rangeOfPredatorsAge),predatorsLifeExpectancy, x, y);
+            map[y][x].addAnimal(predator);
         }
 
-        // Добавляем травоядных в нижний правый угол
-        for (int y = height - 2; y < height; y++) {
-            for (int x = width - 2; x < width; x++) {
-                Herbivore herbivore = new Herbivore("Deer", 3, 6, x, y);
-                map[y][x].addAnimal(herbivore);
+        for (int i = 0; i < startAmountOfHerbivore; i++) {
+            if (startAmountOfHerbivore > width * height - startAmountOfPredators){
+                System.out.println("Превышен размер карты для травоядных");
             }
+            int x,y;
+            do{
+                x = rand.nextInt(width);
+                y = rand.nextInt(height);
+            } while (!map[y][x].hasAnimal());
+            Animal herbivore = new Herbivore("Dear", rand.nextInt(rangeOfHerbivoreAge), herbivoreLifeExpectancy, x, y);
+            map[y][x].addAnimal(herbivore);
+
         }
     }
 
@@ -78,8 +96,14 @@ public class EcosystemMap implements Serializable {
     }
 
 
-
     public static EcosystemMap getInstance() {
+        return instance;
+    }
+
+    public static EcosystemMap getInstance(int height, int width) {
+        if (instance == null) {
+            instance = new EcosystemMap(height, width);
+        }
         return instance;
     }
 
@@ -132,7 +156,7 @@ public class EcosystemMap implements Serializable {
                 add(y);
             }};
             waterSouceMap.put(coords, map[y][x]);
-            map[y][x].addWater(rand.nextInt(151,250)); // Set initial water level at source to capacity
+            map[y][x].addWater(rand.nextInt((int) (maxWaterInCell * 0.6),maxWaterInCell)); // Set initial water level at source to capacity
         }
     }
 
@@ -140,33 +164,33 @@ public class EcosystemMap implements Serializable {
         return waterSouceMap;
     }
 
-    public static void saveState(String filename){
-        try (FileOutputStream fileOut = new FileOutputStream(filename);
+    public static void saveState(){
+
+        try (FileOutputStream fileOut = new FileOutputStream(SAVE_FILE);
              ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
             out.writeObject(EcosystemMap.getMap()); // Сохранение массива клеток
             out.writeObject(Climate.getInstance());   // Сохранение климата
-            System.out.println("Состояние сохранено в " + filename);
+            Config.saveState(out);
+            System.out.println("Состояние сохранено в " + SAVE_FILE);
         } catch (IOException e) {
             System.err.println("Ошибка при сохранении состояния: " + e.getMessage());
         }
     }
 
 
-    public static void loadState(String filename){
-        try (FileInputStream fileIn = new FileInputStream(filename);
+    public static EcosystemMap loadState(String filename){
+        try (FileInputStream fileIn = new FileInputStream("./savedSimulations/" + filename);
              ObjectInputStream in = new ObjectInputStream(fileIn)) {
             Cell[][] loadedCelledMap = (Cell[][]) in.readObject();
             Climate loadedClimate = (Climate) in.readObject();
-
-            instance = new EcosystemMap(loadedCelledMap.length, loadedCelledMap[0].length);
-            map = loadedCelledMap; // устанавливаем загруженный массив в карту
-
-            // Устанавливаем загруженный климат
-            Climate.getInstance(loadedClimate.getTemperature(), loadedClimate.getHumidity());
-
+            instance = new EcosystemMap(loadedCelledMap.length, loadedCelledMap[0].length, loadedCelledMap);
+            Climate.getInstance(loadedClimate.getTemperature(), loadedClimate.getHumidity()); // Устанавливаем загруженный климат
+            Config.loadState(in);
             System.out.println("Состояние загружено из " + filename);
+            return instance;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Ошибка при загрузке состояния: " + e.getMessage());
+            return null;
         }
     }
 
@@ -174,7 +198,7 @@ public class EcosystemMap implements Serializable {
     public String toString() {
         StringBuilder res = new StringBuilder();
         // Верхняя граница
-        res.append("+" + "-".repeat(width * 5) + "+\n");
+        res.append("+" + "-".repeat(width * 8) + "+\n");
 
         for (int y = 0; y < height; y++) {
             res.append("|");
@@ -205,7 +229,7 @@ public class EcosystemMap implements Serializable {
         }
 
         // Нижняя граница
-        res.append("+" + "-".repeat(width * 5) + "+\n");
+        res.append("+" + "-".repeat(width * 8) + "+\n");
 
         return res.toString();
     }

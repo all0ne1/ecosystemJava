@@ -8,14 +8,15 @@ import org.andaevalexander.map.EcosystemMap;
 
 import java.io.Serializable;
 
+import static org.andaevalexander.Config.baseSpeciesSaturation;
+
 public abstract class Species implements Serializable {
     protected String name;
     protected int age;
     protected int x;
     protected int y;
-    protected int saturation = 100;
+    protected int saturation = baseSpeciesSaturation;
     protected double energyConsumptionRate;
-    protected int energyToGrowth;
     protected Cell[][] map = EcosystemMap.getMap();
     public Species(String name, int age) {
         this.name = name;
@@ -31,16 +32,22 @@ public abstract class Species implements Serializable {
                 this.energyConsumptionRate = 0.7;
                 break;
         }
-        this.energyToGrowth = (int) (100 * energyConsumptionRate);
     }
 
-    public void setEnergyConsumptionRate(double energyConsumptionRate) {
-        this.energyConsumptionRate = energyConsumptionRate;
+    public void updateConditions() {
+        switch (Climate.getConditions()) {
+            case Conditions.GOOD:
+                this.energyConsumptionRate = 1.2;
+                break;
+            case Conditions.MODERATE:
+                this.energyConsumptionRate = 1.0;
+                break;
+            case Conditions.BAD:
+                this.energyConsumptionRate = 0.7;
+                break;
+        }
     }
 
-    public void setEnergyToGrowth(int energyToGrowth) {
-        this.energyToGrowth = energyToGrowth;
-    }
 
     public void setX(int x) {
         this.x = x;

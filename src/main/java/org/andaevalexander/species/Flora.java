@@ -6,15 +6,19 @@ import org.andaevalexander.map.EcosystemMap;
 import java.io.Serializable;
 import java.util.Random;
 
+import static org.andaevalexander.Config.*;
+
 public class Flora extends Species implements Plant, Serializable {
-    private int waterAmount = 10;
+    private int waterAmount = minPlantsWaterAmount;
     private final Random rand = new Random();
     private final int plantsLifeExpec;
+    private int energyToGrowth;
     public Flora(String name, int age, int plantsLifeExpec, int x, int y) {
         super(name, age);
         this.x = x;
         this.y = y;
         this.plantsLifeExpec = plantsLifeExpec;
+        this.energyToGrowth = (int) (saturationNeedToGrowthPlants * energyConsumptionRate);
     }
 
     @Override
@@ -41,13 +45,13 @@ public class Flora extends Species implements Plant, Serializable {
     @Override
     public void consumeResources() {
         Cell currentCell = map[y][x];
-        waterAmount += currentCell.reduceWater(rand.nextInt(10,50));
-        saturation += 20;
+        waterAmount += currentCell.reduceWater(rand.nextInt(10,40));
+        saturation += plantsSaturationPerTurns;
     }
 
     @Override
     public int getCostOfEating() {
-        return (waterAmount + saturation) / 2;
+        return (waterAmount + saturation) / 4;
     }
 
     @Override

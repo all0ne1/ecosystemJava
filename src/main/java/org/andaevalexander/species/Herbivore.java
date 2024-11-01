@@ -1,8 +1,10 @@
 package org.andaevalexander.species;
 
+import org.andaevalexander.Ecosystem;
 import org.andaevalexander.map.Cell;
 import org.andaevalexander.map.EcosystemMap;
 
+import static org.andaevalexander.Config.saturationNeedToReproduceHerbivore;
 import static org.andaevalexander.map.EcosystemMap.*;
 
 public class Herbivore extends Species implements Animal{
@@ -19,19 +21,21 @@ public class Herbivore extends Species implements Animal{
         Cell currentCell = map[y][x];
         if (currentCell.hasPlant()){
             saturation += currentCell.eatPlant();
+            Ecosystem.LOGGER.info("Травоядное в (" + y + ", " + x + ") съело растение. Новый уровень сытости " + saturation);
         }
     }
 
 
     @Override
     public void reproduce() {
-        if (saturation > 70){
+        if (saturation > saturationNeedToReproduceHerbivore){
             for (int[] dir : EcosystemMap.MOVING_DIRECTIONS) {
                 int newX = x + dir[0];
                 int newY = y + dir[1];
                 if (isWithinBounds(newX, newY) && !isAnimalInMovingCell(newX, newY)) {
                     map[newY][newX].addAnimal(new Herbivore(this.name,0, herbivoresLifeExpec, newX, newY));
-                    saturation -= (int) (50 * energyConsumptionRate);
+                    saturation -= (int) (saturationNeedToReproduceHerbivore * energyConsumptionRate);
+                    Ecosystem.LOGGER.info("Новое травоядное в (" + newY + ", " + newX + ")");
                     break;
                 }
             }

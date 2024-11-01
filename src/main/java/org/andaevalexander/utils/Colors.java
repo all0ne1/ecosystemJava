@@ -1,4 +1,4 @@
-package org.andaevalexander;
+package org.andaevalexander.utils;
 
 public class Colors {
     public final static String RESET = "\u001B[0m";
